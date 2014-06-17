@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang='en'>
+	<head>
+		<meta charset="utf-8">
+		<title>BlackJack</title>
+	</head>
+	<body>
+		<div>
+			<h1>DEALER
+				<% if @dealer_bust == true %>
+				  <span>&nbsp;&nbsp;Dealer Busts</span>
+				<% elsif @dealer_bj == true %>
+				  <span>&nbsp;&nbsp;Blackjack</span>
+				<% end %>	
+			</h1>
+			<h4>
+				<% @dealer.hands.each do |hand| %>
+				Score: 
+				<%= @game.score(hand)%>&nbsp;&nbsp;&nbsp;
+				<% end %>
+			</h4>
+			<h1>
+				<% @dealer.hands.each do |hand| %>
+				<%= @dealer.show(hand)%>
+				<% end %>
+			</h1>
+			</br></br>
+			<h1>PLAYER
+				<% if @bust == true %>
+				  <span>&nbsp;&nbsp;Bust</span>
+				<% elsif @bj == true %>
+				  <span>&nbsp;&nbsp;Blackjack!</span>
+				<% end %>
+			</h1>
+			<h4>
+				<% @player.hands.each do |hand| %>
+				Score: 
+				<%= @game.score(hand)%>&nbsp;&nbsp;&nbsp;
+				<% end %>
+			</h4>
+			<h1>
+				<% @player.hands.each do |hand| %>
+				<%= @player.show(hand)%>&nbsp;&nbsp;&nbsp;
+				<% end %>
+			</h1>
+
+		</div>
+		<div>
+			<h4>Balance: $<%=@player.balance %></h4>
+			<h4>
+				<% @player.bets.each do |bet| %>
+				  Bet: $<%= bet %>
+				<% end %>
+			</h4>
+		</div>
+		<div>
+		 <% @player.hands.each_with_index do |hand, index| %>	
+			<form action="/" method="post">
+				<% if @bust == false && @stay == false && @bj == false %>
+
+				    <input type="hidden" name="index" value = "<%=index%>"/>
+					<button formmethod="post" name="hit"  value= "<%= @id %>">Hit</button>
+					<button formmethod="post" name="stay" value= "<%= @id %>">Stay</button>
+					<% if @fresh_deal == true %>
+					  <button formmethod="post" name="double"+<%=index%> value= "<%= @id %>">Double</button>
+					  <% if @game.split?(hand) %>
+					      <button formmethod="post" name="split" value= "<%= @id %>">Split</button>
+					  <% end %>
+					<% end %>
+	
+				<% else %>
+				    <% if index == 0 %>
+						<button formmethod="post" name="next_hand" value= "<%= @id %>">Next Hand</button>
+						<label for="new_bet">Bet: $</label>
+						<input type="text" name="new_bet" id="new_bet" size="5" value="100"/>
+					<%end%>
+				<%end%>
+		    </form>
+		 <% end %>
+
+		<div>
+			<h1>
+				
+				<% @player.win_or_loss.each do |outcome|%>
+					<% if outcome == 'win' %>
+					You Win!
+					<% elsif outcome == 'loss' %>
+					Dealer Wins
+					<% elsif outcome == 'push' %>
+					Push
+					<% end %>
+				<% end %>
+			</h1>
+		</div>
+		
+		</div>
+	</body>
+</html>
