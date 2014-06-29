@@ -1,8 +1,12 @@
 class Hand
-   attr_accessor :hand, :bet 
+   attr_accessor :hand
 
    $face_cards = ['J','Q','K']
    
+   def initialize(hand=[])
+     @hand = hand
+   end
+
    def value(card)
      if $face_cards.include?(card[0])
        10
@@ -26,11 +30,19 @@ class Hand
    end
 
    def blackjack?
-      if score == 21
+      if score == 21 && @hand.length == 2
          true
       else
          false
       end
+   end
+
+   def ace?
+     if @hand.select{|card| card.include?('A')}.empty?
+       false
+     else
+       true
+     end
    end
 
    def show

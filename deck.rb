@@ -1,52 +1,42 @@
-SUITS = ['♥','♦','♠','♣']
+SUITS = ['H','D','S','C']
 CARDS = ['A','2','3','4','5','6','7','8','9','J','Q','K']
 
 
 class Deck
-	def initialize()
+	attr_reader :deck
+
+	def initialize(deck = make_deck)
+		@deck = deck
 		@cut_card = 'c'
-		@numdecks = 6
-        @collection=[]
-		@numdecks.times do 
+	end
+
+	def make_deck(numdecks = 6)
+		@deck = []
+		@cut_card = 'c'
+		numdecks.times do 
 			SUITS.each do |suit|
 				CARDS.each do |card|
-					@collection << card+suit
+					@deck << card+suit
 				end
 			end
 		end
-		@collection = @collection.shuffle
+		@deck = @deck.shuffle
 		cut
 	end
 
 	def cut
-		rand_index = ((@collection.length*0.2).to_i..(@collection.length*0.8).to_i).to_a.sample	
-		@collection.insert(rand_index,@cut_card)
-	end
-
-	def reshuffle
-		@collection = []
-		@numdecks.times do
-			SUITS.each do |suit|
-				CARDS.each do |card|
-					@collection << card+suit
-				end
-			end
-		end
-		@collection = @collection.shuffle
-		cut
+		rand_index = ((@deck.length*0.2).to_i..(@deck.length*0.8).to_i).to_a.sample	
+		@deck.insert(rand_index,@cut_card)
 	end
 
 	def deal
 		cut = false
-		if @collection.pop == @cut_card
+		card = @deck.pop
+		if card == @cut_card
+			puts "cut card has been dealt"
 			cut=true 
-			throwout_card = @collection.pop
-			card = @collection.pop
-		else
-			card = @collection.pop
-		end
-		if cut == true
-			reshuffle
+			card = @deck.pop
+			make_deck
 		end
 		card
 	end

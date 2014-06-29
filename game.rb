@@ -28,7 +28,7 @@ class Blackjack
       elsif card[0]=='A'
         11
       else
-        card.to_i
+        card[0].to_i
       end
     end
 
@@ -58,7 +58,7 @@ class Blackjack
      end
 
      def split?(hand)
-       if hand[0][0] == hand[1][0]
+       if value(hand[0][0]) == value(hand[1][0])
        	 true
        else
        	 false
@@ -72,4 +72,14 @@ class Blackjack
      		false
      	end
      end
+
+     def ace?(hand)
+      hand.each do |card|
+        if card[0] == 'A'
+          return true
+        end
+      end
+      false
+     end
+
 end

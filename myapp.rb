@@ -16,7 +16,7 @@ post '/' do
    if bet > 0 && bet <= 1000
      @game = Blackjack.new
      @deck = Deck.new
-     #@strategy = Strategy.new
+     @strategy = Strategy.new
      @player = Player.new
      @dealer = Player.new
      @player.balance = 1000
@@ -30,27 +30,27 @@ post '/' do
      @player.bet(bet) #remove bet from player balance
      #associate bet with hand
      @player.add_bet(bet)
+  
+     player_hand, player_bet, dealer_hand = @player.hands.last, @player.bets.last.to_i, @dealer.hands.last
      #check for blackjack (both player and dealer)
      if @player.hands.length == 1 #you cant get blackjack after you split
-       player_hand, player_bet, dealer_hand = @player.hands.last, @player.bets.last.to_i, @dealer.hands.last
        if @game.blackjack?(player_hand) && !@game.blackjack?(dealer_hand)#if player has blackjack and dealer doesn't have blackjack
-         puts "blackjack!"
          @player.win_or_loss[0] = 'win'
          @bj = true #blackjack notification shown, h/s/d/split options not displayed to user
          @player.win(player_bet*(1 + 1.5))#gets bet + bet * 1.5
        elsif @game.blackjack?(player_hand) && @game.blackjack?(dealer_hand)#elsif player has blackjack and dealer has blackjack
-         puts "you both have blackjack!"
          @player.win_or_loss[0] = 'push'
          @bj = true #blackjack notification shown, next hand option avaialable
          @player.win(player_bet) #player wins his bet back
        elsif !@game.blackjack?(player_hand) && @game.blackjack?(dealer_hand) #elseif player does not have blackjack and dealer has blackjack
-         puts "dealer has 21 :("
          @player.win_or_loss[0] = 'loss'
          @dealer_bj = true
          @stay = true #goes to next hand
        end
      end
-     #generate id to save game data for next post request
+
+     #determine the right move
+     @strategy.get_move(@player,@game,@dealer.show(dealer_hand)[0],0)#{@strategy.get_move(@player,@dealer.show(dealer_hand)[0] to save game data for next post request
      @id = rand(36**6).to_s(36)
      while check_dup(@id)
        @id = rand(36**6).to_s(36)
@@ -91,6 +91,7 @@ post '/' do
 
      @game = Blackjack.new
      @deck = Deck.new(@saved_game[:deck])
+     @strategy = Strategy.new
      if @action == "next_hand"
        @player = Player.new
        @dealer = Player.new
@@ -124,13 +125,17 @@ post '/' do
        @dealer = Player.new(@saved_game[:dealer])
      end
 
+     dealer_hand = @dealer.hands.last
+
      if @action == "hit"
+       @player.moves[index] = 'hit'
        puts "hitting hand #{index}"
    	   @game.hit(@player,@deck,index)
        @game.bust?(@player.hands[index]) ? @player.moves[index] = 'bust' : @player.moves[index] = 'open' #check if player busted
        @bust = true if @player.moves.select{|move| move == 'bust'}.length == @player.hands.length #check if all hands busted
        puts "busted hand #{index}" if @game.bust?(@player.hands[index])
        puts "all hands busted" if @bust
+       puts @player.moves[index]
        @stay = true if @player.moves.select{|move| move == 'bust' || move == 'stay'}.length == @player.hands.length #check if all hands have either busted or stayed
      elsif @action == "stay"
        @player.moves[index] = 'stay'
@@ -188,19 +193,22 @@ post '/' do
          hand_bet = @player.bets[index].to_i
          if @player.moves[index] == 'bust'
            @player.win_or_loss[index] = 'loss'
-         elsif @dealer_bust == true
+           puts "Player loses hand #{index} due to bust"
+         elsif @dealer_bust == true && @player.moves[index] != 'bust'
            @player.win(hand_bet * 2) #player wins bet
            @player.win_or_loss[index] = 'win'
+           puts "Player wins hand #{index} due to dealer bust" 
          elsif player_score == dealer_score #push
            @push = true
            @player.win(hand_bet) #player gets his bet back
            @player.win_or_loss[index] = 'push'
+           puts "Player pushes hand #{index} due to tie"
          elsif player_score < dealer_score
            @player.win_or_loss[index] = 'loss'
-           #@player_wins = false
+           puts "Player loses hand #{index} due to lower score"
          else
            @player.win_or_loss[index] = 'win'
-           #@player_wins = true
+           puts "Player wins hand #{index} due to higher score"
            @player.win(hand_bet * 2)
          end
        end
@@ -208,10 +216,13 @@ post '/' do
        #@player_wins = false
        @player.hands.length.times do 
          @player.win_or_loss << 'loss'
+         puts "Player busted on all hands, hand #{index}"
        end
      end
-     
+    
+     @strategy.get_move(@player,@game,@dealer.show(dealer_hand)[0],index) 
      save_game(@id, @player.hands, @dealer.hands, @deck.deck, @player.balance, @player.bets, @player.moves, @player.win_or_loss)
+    
 
    	 erb :game
 
